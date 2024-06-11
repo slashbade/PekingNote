@@ -16,6 +16,11 @@ instance : MulAction G G where
   one_smul := one_mul
   mul_smul := mul_assoc
 
+/-! Example 1.3 -/
+#check MulAction.toPermHom
+#check MulAction.bijective
+#check MulAction.toPerm_injective
+
 /-! Example 1.5 -/
 instance trivial_smul : SMul G α where
   smul := fun g a => a
