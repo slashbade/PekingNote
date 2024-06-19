@@ -1,10 +1,16 @@
+import Mathlib.Algebra.Group.Centralizer
+
 import Mathlib.GroupTheory.GroupAction.Basic
 import Mathlib.GroupTheory.Perm.Basic
 import Mathlib.GroupTheory.GroupAction.ConjAct
 import Mathlib.GroupTheory.GroupAction.Quotient
 import Mathlib.Deprecated.Subgroup
+import Mathlib.GroupTheory.QuotientGroup
 
-variable {G α A: Type*} [Group G] {f : G × A → A}
+open Classical
+
+variable {G α : Type} [Group G]
+variable {H : Subgroup G}
 
 -- #check MulAction G M
 
@@ -37,6 +43,7 @@ instance : MulAction G G where
 #check MulAction.toPerm_injective
 
 /-! Example 1.5 -/
+namespace exp15
 -- namespace trivial_action
 
 -- instance trivial_smul : SMul G α where
@@ -44,6 +51,8 @@ instance : MulAction G G where
 -- instance trivial_mul_action : MulAction G α where
 --   one_smul := fun _ => rfl
 --   mul_smul := fun _ _ _ => rfl
+end exp15
+
 
 -- end trivial_action
 
@@ -122,51 +131,40 @@ namespace Center
 end Center
 
 
-/-! Example 1.11 -/
+-- /-!Example 1.7-/
+-- namespace exp17
+-- variable (g : G)
+-- variable (gH : G⧸H)
+-- #check QuotientGroup.mk⁻¹
+
+-- lemma exist_rep : ∃ g : G, QuotientGroup.mk g = gH := by
+--   rcases gH with g | _
+--   exact ⟨g, rfl⟩
+
+-- noncomputable def smul (α : G) (gH : G⧸H) : G⧸H := QuotientGroup.mk (α * choose (exist_rep gH))
+
+-- noncomputable instance quotient_smul : SMul G (G⧸H) where
+--   smul := smul
+
+-- lemma one_smul : (1 : G) • gH = gH := by sorry
+
+-- lemma mul_smul : ∀ (g₁ g₂ : G) (gH : G⧸H), (g₁ * g₂) • gH = g₁ • g₂ • gH := by
+--   intro g₁ g₂ gH
+--   rcases gH with g | Hg
+--   simp only [quotient_smul, QuotientGroup.mk, choose]
+--   sorry
+
+-- noncomputable instance quotient_mul_action : MulAction G (G⧸H) where
+--   one_smul := one_smul
+--   mul_smul := mul_smul
+
+-- def smul_map_permutation (g : G) : Equiv.Perm (G⧸H) := sorry
+
+-- end exp17
 
 /-! Example 1.12 -/
+namespace exp12
 
+lemma exp121 [CommGroup G] : ∀ (A : Set G), Set.centralizer A = G := sorry
 
-/-! Example 1.13 -/
-
-
-/-! Example 1.14 -/
-
-
-
-/-! Example 1.15 -/
-
-
-/-! Example 1.16 -/
-
-
-
-/-! Example 1.17 -/
-
-
-/-! Example 1.18 -/
-
-/-! Example 1.19 -/
-
-
-/-! Example 1.20 -/
-
-
-
-/-! Example 1.21 -/
-
-
-/-! Example 1.22 -/
-
-
-
-/-! Example 1.23 -/
-
-
-
-/-! Example 1.24 -/
-
-
-
-
-/-! Example 1.25 -/
+end exp12
