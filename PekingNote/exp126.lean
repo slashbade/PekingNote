@@ -69,10 +69,22 @@ theorem Group.nat_card_center_add_sum_card_noncenter_eq_card [Finite G] :
   rw [eq_comm, ← Set.toFinset_card, Finset.card_eq_one]
   exact ⟨g, Finset.coe_injective <| by simpa using hg.eq_singleton_of_mem mem_carrier_mk⟩
 
-theorem Group.nat_card_center_add_sum_card_noncenter_eq_card' [Fintype G] [Fintype <| ConjClasses G]:
+variable [DecidableEq G]
+
+variable [DecidableRel (@IsConj G _)]
+
+-- instance : DecidableEq <| Quotient (IsConj.setoid G)
+
+-- instance : DecidableEq (ConjClasses G) := inferInstanceAs <| DecidableEq <| Quotient (IsConj.setoid G)
+-- set_option diagnostics true
+
+theorem Group.nat_card_center_add_sum_card_noncenter_eq_card'
+  [Fintype G] [Fintype <| ConjClasses G] [∀ x : ConjClasses G, Fintype x.carrier] [Fintype <| noncenter G]:
     Nat.card (Subgroup.center G) + ∑ᶠ x ∈ noncenter G, Nat.card x.carrier = Nat.card G := by
-  nth_rw 2 [← Group.sum_card_conj_classes_eq_card]
-  rw [finsum_eq_sum_of_fintype]
+  -- classical
+  -- cases nonempty_fintype G
+  rw [@Nat.card_eq_fintype_card G]
+  rw [← sum_conjClasses_card_eq_card, ←Finset.sum_sdiff (ConjClasses.noncenter G).toFinset.subset_univ]
 
   sorry
 
