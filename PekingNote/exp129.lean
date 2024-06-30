@@ -34,6 +34,8 @@ def cananical_perm_of_partition (n : ℕ) (parts : List ℕ) : SymmGroup n :=
   | [] => 1
   | ph :: pt => ((Fin.list n).take ph).formPerm * (cananical_perm_of_partition n pt)
 
+
+
 def partition_of_conjClasses (n : ℕ) (c : ConjClasses (SymmGroup n)) : Nat.Partition n := by
   -- intro c
   -- have : n = Fintype.card (Fin n) := Eq.symm (Fintype.card_fin n)
@@ -45,6 +47,11 @@ lemma p_eq (n : ℕ) (parts : List ℕ) : (cananical_perm_of_partition n parts).
   induction parts
   . simp [cananical_perm_of_partition, partition];
     sorry
+  sorry
+
+-- #check Function.Bijective
+
+lemma symmetry_group_ConjClasses_equiv_partition' (n : ℕ) : ∃ f : (ConjClasses (SymmGroup n)) → n.Partition, Function.Bijective f :=
   sorry
 
 def symmetry_group_ConjClasses_equiv_partition (n : ℕ) : (ConjClasses (SymmGroup n)) ≃ Nat.Partition n where
