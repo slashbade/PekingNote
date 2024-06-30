@@ -99,7 +99,9 @@ noncomputable def symmetry_group_ConjClasses_equiv_partition {n : ℕ} :
         . sorry
         rfl
       simp only [Function.comp_apply]
-      have : (List.take σ.support.card (Fin.list n)).Nodup := by sorry
+      have : (List.take σ.support.card (Fin.list n)).Nodup := by
+        suffices h : (Fin.list n).Nodup by exact List.Nodup.sublist (List.take_sublist _ _) h
+        sorry
       rw [List.support_formPerm_of_nodup ((Fin.list n).take σ.support.card) this ?_, List.toFinset_card_of_nodup this]
       . simp only [List.length_take, Fin.length_list, min_eq_left_iff, ge_iff_le, SymmGroup.card_support_le_card]
       by_contra! h
