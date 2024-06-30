@@ -32,6 +32,10 @@ namespace SymmGroup
 
 variable {n : ℕ}
 
+def toPerm (σ : SymmGroup n) : Equiv.Perm (Fin n) := σ
+
+instance : Setoid (SymmGroup n) := IsConj.setoid (SymmGroup n)
+
 def partition (σ : SymmGroup n) : n.Partition where
   parts := σ.cycleType + Multiset.replicate (Fintype.card (Fin n) - σ.support.card) 1
   parts_pos {n hn} := by
@@ -53,42 +57,56 @@ theorem filter_parts_partition_eq_cycleType {σ : SymmGroup n} :
   rw [Multiset.eq_of_mem_replicate h]
   decide
 
+lemma card_support_le_card {σ : SymmGroup n} : σ.support.card ≤ n := by
+  suffices h : σ.support.card ≤ Fintype.card (Fin n) by rw [Fintype.card_fin n] at h; exact h
+  exact σ.support.card_le_univ
+
 end SymmGroup
 
 /-This is an aux so so that the ones are filtered-/
-def cananical_perm_of_parts (n : ℕ) (parts : List ℕ) : SymmGroup n :=
+def cananical_perm_of_parts {n : ℕ} (parts : List ℕ) : SymmGroup n :=
   match parts with
   | [] => 1
-  | ph :: pt => ((Fin.list n).take ph).formPerm * (cananical_perm_of_parts n pt)
+  | ph :: pt => ((Fin.list n).take ph).formPerm * (cananical_perm_of_parts pt)
 
-noncomputable def conjClasses_of_partition (n : ℕ) (p : Nat.Partition n) : ConjClasses (SymmGroup n) := by
+-- lemma cycleType_eq_of_cananical_perm {n : ℕ} (σ : SymmGroup n) : σ.cycleType
+
+noncomputable def conjClasses_of_partition {n : ℕ} (p : Nat.Partition n) : ConjClasses (SymmGroup n) := by
   let parts := p.parts.filter (· >= 2)
-  exact ⟦cananical_perm_of_parts n parts.toList⟧
+  exact ⟦cananical_perm_of_parts parts.toList⟧
 
 /- This function construct a partition with one s-/
-noncomputable def partition_of_conjClasses (n : ℕ) (c : ConjClasses (SymmGroup n)) : Nat.Partition n := by
-  -- rw [← Fintype.card_fin n]
-  exact (@Quotient.out (SymmGroup n) (IsConj.setoid (SymmGroup n)) c).partition
+noncomputable def partition_of_conjClasses {n : ℕ} (c : ConjClasses (SymmGroup n)) : Nat.Partition n :=
+  c.out.partition
 
--- #check Function.Bijective
-
--- lemma symmetry_group_ConjClasses_equiv_partition' (n : ℕ) : ∃ f : (ConjClasses (SymmGroup n)) → n.Partition,
---   Function.Bijective f := by
---   constructor; swap;
---   intro c;
---   let g := @Quotient.out (SymmGroup n) (IsConj.setoid (SymmGroup n)) c
---   rw [← Fintype.card_fin n]
---   exact g.partition
---   . constructor
---     intro c1 c2 fh; sorry;
-
-noncomputable def symmetry_group_ConjClasses_equiv_partition (n : ℕ) :
+noncomputable def symmetry_group_ConjClasses_equiv_partition {n : ℕ} :
   (ConjClasses (SymmGroup n)) ≃ Nat.Partition n where
-  toFun := partition_of_conjClasses n
-  invFun := conjClasses_of_partition n
+  toFun := partition_of_conjClasses
+  invFun := conjClasses_of_partition
   left_inv := by
     intro c
     simp [partition_of_conjClasses, conjClasses_of_partition, SymmGroup.filter_parts_partition_eq_cycleType]
+    suffices h : IsConj (cananical_perm_of_parts c.out.cycleType.toList) c.out by
+      rw [←ConjClasses.mk_eq_mk_iff_isConj, ConjClasses.mk, ConjClasses.mk, Quotient.out_eq] at h; exact h
+    rw [isConj_iff_cycleType_eq]
+    induction' (c.out) using cycle_induction_on with σ hσ σ τ hd hc h1 h2
+    . simp [cananical_perm_of_parts]
+    . simp only [IsCycle.cycleType hσ, coe_singleton, toList_singleton, cananical_perm_of_parts, mul_one]
+      rw [cycleType_def, Multiset.map_eq_singleton]; use (List.take σ.support.card (Fin.list n)).formPerm
+      constructor
+      . rw [Finset.val_eq_singleton_iff, cycleFactorsFinset_eq_singleton_iff]
+        constructor
+        . sorry
+        rfl
+      simp only [Function.comp_apply]
+      have : (List.take σ.support.card (Fin.list n)).Nodup := by sorry
+      rw [List.support_formPerm_of_nodup ((Fin.list n).take σ.support.card) this ?_, List.toFinset_card_of_nodup this]
+      . simp only [List.length_take, Fin.length_list, min_eq_left_iff, ge_iff_le, SymmGroup.card_support_le_card]
+      by_contra! h
+      rw [←List.length_eq_one, List.length_take, Fin.length_list] at h
+      have hhh := IsCycle.two_le_card_support hσ
+      rw [min_eq_left_iff.mpr SymmGroup.card_support_le_card] at h
+      linarith
     sorry
 
   right_inv := sorry
