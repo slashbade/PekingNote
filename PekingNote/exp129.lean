@@ -63,6 +63,13 @@ lemma card_support_le_card {σ : SymmGroup n} : σ.support.card ≤ n := by
 
 end SymmGroup
 
+namespace Multiset
+
+lemma cons_toList {α : Type*} (a : α) (l : Multiset α) : (a ::ₘ l).toList = a :: l.toList := by
+  simp [Multiset.cons, Multiset.toList]; sorry
+end Multiset
+
+
 /-This is an aux so so that the ones are filtered-/
 def cananical_perm_of_parts {n : ℕ} (parts : List ℕ) (cann : List (Fin n)) : SymmGroup n :=
   match parts with
@@ -117,6 +124,6 @@ noncomputable def symmetry_group_ConjClasses_equiv_partition {n : ℕ} :
       rw [min_eq_left_iff.mpr SymmGroup.card_support_le_card] at h
       linarith
     rw [Disjoint.cycleType]; nth_rw 2 [IsCycle.cycleType];
-    simp only [coe_singleton, singleton_add, ];
-    sorry; exact hc;exact hd
+    simp only [coe_singleton, singleton_add, cons_toList, cananical_perm_of_parts];
+    sorry; exact hc; exact hd
   right_inv := sorry
