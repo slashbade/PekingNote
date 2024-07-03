@@ -1,6 +1,7 @@
 import Mathlib.Algebra.Group.Conj
 import Mathlib.Combinatorics.Enumerative.Partition
 import Mathlib.GroupTheory.Perm.Basic
+import Mathlib.GroupTheory.Perm.Cycle.Concrete
 import Mathlib.GroupTheory.Perm.Cycle.Type
 import Mathlib.Data.Multiset.Basic
 
@@ -69,32 +70,30 @@ lemma cons_toList {α : Type*} (a : α) (l : Multiset α) : (a ::ₘ l).toList =
   simp [Multiset.cons, Multiset.toList]; sorry
 end Multiset
 
+variable {n : ℕ} {hn2 : 2 ≤ n}
 
 /-This is an aux so so that the ones are filtered-/
-def cananical_perm_of_parts {n : ℕ} (parts : List ℕ) (cann : List (Fin n)) : SymmGroup n :=
+def cananical_perm_of_parts (parts : List ℕ) (cann : List (Fin n)) : SymmGroup n :=
   match parts with
   | [] => 1
   | ph :: pt => (cann.take ph).formPerm * (cananical_perm_of_parts pt (cann.drop ph))
 
-noncomputable def cananical_perm_of_parts' {n : ℕ} (parts : Multiset ℕ) (cann : List (Fin n)) : SymmGroup n :=
-  sorry
-
-lemma add_eq_of_cananical_perm {n : ℕ} (p q : List ℕ) :
+lemma add_eq_of_cananical_perm (p q : List ℕ) :
 cananical_perm_of_parts (p ++ q) (List.finRange n) =
   cananical_perm_of_parts p (List.finRange n) * cananical_perm_of_parts q (List.finRange n) := by
   sorry
 
 -- lemma cycleType_eq_of_cananical_perm {n : ℕ} (σ : SymmGroup n) : σ.cycleType
 
-noncomputable def conjClasses_of_partition {n : ℕ} (p : Nat.Partition n) : ConjClasses (SymmGroup n) := by
+noncomputable def conjClasses_of_partition (p : Nat.Partition n) : ConjClasses (SymmGroup n) := by
   let parts := p.parts.filter (· >= 2)
   exact ⟦cananical_perm_of_parts parts.toList (List.finRange n)⟧
 
 /- This function construct a partition with one s-/
-noncomputable def partition_of_conjClasses {n : ℕ} (c : ConjClasses (SymmGroup n)) : Nat.Partition n :=
+noncomputable def partition_of_conjClasses (c : ConjClasses (SymmGroup n)) : Nat.Partition n :=
   c.out.partition
 
-noncomputable def symmetry_group_ConjClasses_equiv_partition {n : ℕ} :
+noncomputable def symmetry_group_ConjClasses_equiv_partition :
   (ConjClasses (SymmGroup n)) ≃ Nat.Partition n where
   toFun := partition_of_conjClasses
   invFun := conjClasses_of_partition
@@ -107,16 +106,18 @@ noncomputable def symmetry_group_ConjClasses_equiv_partition {n : ℕ} :
     induction' (c.out) using cycle_induction_on with σ hσ σ τ hd hc h1 h2
     . simp [cananical_perm_of_parts]
     . simp only [IsCycle.cycleType hσ, coe_singleton, toList_singleton, cananical_perm_of_parts, mul_one]
+      have take_nodup: (List.take σ.support.card (List.finRange n)).Nodup := by
+        suffices h : (List.finRange n).Nodup by exact List.Nodup.sublist (List.take_sublist _ _) h
+        exact List.nodup_finRange n
       rw [cycleType_def, Multiset.map_eq_singleton]; use (List.take σ.support.card (List.finRange n)).formPerm
       constructor
       . rw [Finset.val_eq_singleton_iff, cycleFactorsFinset_eq_singleton_iff]
         constructor; swap; rfl;
-        sorry
+        apply List.isCycle_formPerm (take_nodup);
+        simp only [List.length_take, List.length_finRange]
+        exact le_min (one_lt_card_support_of_ne_one hσ.ne_one) (hn2)
       simp only [Function.comp_apply]
-      have : (List.take σ.support.card (List.finRange n)).Nodup := by
-        suffices h : (List.finRange n).Nodup by exact List.Nodup.sublist (List.take_sublist _ _) h
-        exact List.nodup_finRange n
-      rw [List.support_formPerm_of_nodup ((List.finRange n).take σ.support.card) this ?_, List.toFinset_card_of_nodup this]
+      rw [List.support_formPerm_of_nodup ((List.finRange n).take σ.support.card) take_nodup ?_, List.toFinset_card_of_nodup take_nodup]
       . simp only [List.length_take, List.length_finRange, min_eq_left_iff, ge_iff_le, SymmGroup.card_support_le_card]
       by_contra! h
       rw [← List.length_eq_one, List.length_take, List.length_finRange] at h
@@ -125,5 +126,10 @@ noncomputable def symmetry_group_ConjClasses_equiv_partition {n : ℕ} :
       linarith
     rw [Disjoint.cycleType]; nth_rw 2 [IsCycle.cycleType];
     simp only [coe_singleton, singleton_add, cons_toList, cananical_perm_of_parts];
+    have cann_disj : Disjoint ((List.finRange n).take σ.support.card).formPerm
+      (cananical_perm_of_parts τ.cycleType.toList ((List.finRange n).drop σ.support.card)) := by sorry
+    have : ((List.finRange n).take σ.support.card).formPerm.cycleType = σ.cycleType := by sorry
+    rw [Disjoint.cycleType cann_disj, this]
+    congr 1;
     sorry; exact hc; exact hd
   right_inv := sorry
