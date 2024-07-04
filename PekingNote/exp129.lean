@@ -32,13 +32,15 @@ namespace SymmGroup
 #check isConj_of_cycleType_eq
 #check isConj_iff_cycleType_eq
 #check partition_eq_of_isConj
-#check List.Mem.tail
+-- #check List.Mem.tail
 
 variable {n : ℕ}
 
 def toPerm (σ : SymmGroup n) : Equiv.Perm (Fin n) := σ
 
 instance : Setoid (SymmGroup n) := IsConj.setoid (SymmGroup n)
+
+instance : Fintype (SymmGroup n) := by infer_instance
 
 instance : MulAction (SymmGroup n) (Fin n) where
   one_smul := one_apply
@@ -52,7 +54,8 @@ def p21 : SymmGroup 4 := c[2, 1]
 -- #eval p12 ∘ p21
 #eval @decomposeFin 4 p12
 #eval p12.partition.parts
-#eval @Finset.univ (SymmGroup 3) _
+#eval (@Finset.univ (SymmGroup 3) _).image fun σ => (ConjClasses.mk σ).unquot
+#eval (@Finset.univ (SymmGroup 3) _).image fun σ => σ.partition.parts
 
 /- Generalized version -/
 def Fin_of_Fin_succ_stablizer : MulAction.stabilizer (SymmGroup n.succ) (0 : Fin n.succ) ≃ SymmGroup n where
@@ -69,6 +72,9 @@ def Fin_of_Fin_succ_stablizer : MulAction.stabilizer (SymmGroup n.succ) (0 : Fin
 def S4_stablizer_eq_S3 : MulAction.stabilizer (SymmGroup 4) (0 : Fin 4) ≃ SymmGroup 3 :=
   Fin_of_Fin_succ_stablizer
 
+/- Computational verification -/
+#eval @Finset.univ (MulAction.stabilizer (SymmGroup 4) (0 : Fin 4)).carrier _
+#eval @Finset.univ (SymmGroup 3) _
 
 def partition (σ : SymmGroup n) : n.Partition where
   parts := σ.cycleType + Multiset.replicate (Fintype.card (Fin n) - σ.support.card) 1
@@ -105,7 +111,7 @@ end Multiset
 
 variable {n : ℕ} {hn2 : 2 ≤ n}
 
-/-This is an aux so so that the ones are filtered-/
+/-This is an aux fcn so so that the ones are filtered-/
 def cananical_perm_of_parts (parts : List ℕ) (cann : List (Fin n)) : SymmGroup n :=
   match parts with
   | [] => 1
