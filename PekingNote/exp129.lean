@@ -1,3 +1,5 @@
+import Mathlib.Data.Fintype.Basic
+
 import Mathlib.Algebra.Group.Conj
 import Mathlib.Combinatorics.Enumerative.Partition
 import Mathlib.GroupTheory.Perm.Basic
@@ -49,10 +51,8 @@ def p21 : SymmGroup 4 := c[2, 1]
 
 -- #eval p12 ∘ p21
 #eval @decomposeFin 4 p12
-
-
-/- Example 1.12(2) -/
-def S4_stablizer_eq_S3 : MulAction.stabilizer (SymmGroup 4) (3 : Fin 4) ≃* (SymmGroup 3) := sorry
+#eval p12.partition.parts
+#eval @Finset.univ (SymmGroup 3) _
 
 /- Generalized version -/
 def Fin_of_Fin_succ_stablizer : MulAction.stabilizer (SymmGroup n.succ) (0 : Fin n.succ) ≃ SymmGroup n where
@@ -64,6 +64,11 @@ def Fin_of_Fin_succ_stablizer : MulAction.stabilizer (SymmGroup n.succ) (0 : Fin
       simp [decomposeFin]; let h := s.2; rw [MulAction.mem_stabilizer_iff] at h; exact h
     simp_rw [← this, Prod.eta, Equiv.symm_apply_apply]
   right_inv σ := by simp_rw [Equiv.apply_symm_apply]
+
+/- Example 1.12(2) -/
+def S4_stablizer_eq_S3 : MulAction.stabilizer (SymmGroup 4) (0 : Fin 4) ≃ SymmGroup 3 :=
+  Fin_of_Fin_succ_stablizer
+
 
 def partition (σ : SymmGroup n) : n.Partition where
   parts := σ.cycleType + Multiset.replicate (Fintype.card (Fin n) - σ.support.card) 1
