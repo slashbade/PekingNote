@@ -22,7 +22,7 @@ theorem Sylow.normal_of_unique {P : Sylow p G} (h : Unique (Sylow p G)) : P.Norm
   rw [Sylow.smul_def, Sylow.pointwise_smul_def, Subgroup.pointwise_smul_def]
   simpa
 
-lemma not_simple_iff : (∃ H : Subgroup G, H.Normal ∧ H ≠ ⊤ ∧ H ≠ ⊥) → ¬IsSimpleGroup G:= by
+lemma not_simple_of : (∃ H : Subgroup G, H.Normal ∧ H ≠ ⊤ ∧ H ≠ ⊥) → ¬IsSimpleGroup G:= by
   intro h
   contrapose! h
   intro H HN h
@@ -67,7 +67,7 @@ instance Sylowp.Unique : Unique (Sylow p G) where
     exact fun a => (Eq.trans (hP a) (eq_comm.1 (hP P) ) )
 
 lemma not_simple : ¬IsSimpleGroup G := by
-  apply not_simple_iff
+  apply not_simple_of
   use P
   constructor
   · exact Sylow.normal_of_unique (Sylowp.Unique pp pq hG qltp (P := P))

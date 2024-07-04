@@ -187,7 +187,7 @@ lemma p_index_subgroup_normal  [Group G] [Fintype G] (nt : 1 < n) (h : Fintype.c
     ∀ H : Subgroup G, H.index = p → H.Normal := by
       intro H Hind
       let K := MulAction.kernel G (G⧸H)
-      have ker := @Kernel.kernel_of_permHom (G⧸H) G _ _
+      --have ker := @Kernel.kernel_of_permHom (G⧸H) G _ _
       have iso := QuotientGroup.quotientKerEquivRange (MulAction.toPermHom G (G⧸H))
       have : G⧸K ≃* (toPermHom G (G ⧸ H)).range := by
         sorry
