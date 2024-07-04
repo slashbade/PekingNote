@@ -7,28 +7,69 @@ import Mathlib.Deprecated.Subgroup
 import Mathlib.GroupTheory.Perm.Subgroup
 import Mathlib.Data.Nat.Factors
 
-import PekingNote.Basic
 
 open MulAction Classical
 open scoped Pointwise
 variable {G α : Type} [Group G] [MulAction G α]
+
+
+variable {A : Type} [MulAction G A]
+#check MulAction.stabilizer
+
+def setStabilizer (s : Set A) : Subgroup G := sInf (Set.range (fun a:s => (MulAction.stabilizer G a.1)))
+
+def MulAction.kernel (G A : Type) [Group G] [MulAction G A] : Subgroup G := setStabilizer (@Set.univ A)
+
+/-! Example 1.9 -/
+namespace Kernel
+
+lemma mem_kernel_iff {x : G} {A : Type} [MulAction G A] : x ∈ MulAction.kernel G A ↔ ∀ a : A, x • a = a := by
+  constructor
+  · intro h a
+    simp only [MulAction.kernel,Set.mem_range,setStabilizer] at h
+    simp only [Subgroup.mem_sInf, Set.mem_range, Subtype.exists, Set.mem_univ, exists_const,
+      forall_exists_index, forall_apply_eq_imp_iff, MulAction.mem_stabilizer_iff] at h
+    exact h a
+  · intro h
+    simp only [MulAction.kernel,setStabilizer]
+    simp only [Subgroup.mem_sInf, Set.mem_range, Subtype.exists, Set.mem_univ, exists_const,
+      forall_exists_index, forall_apply_eq_imp_iff, MulAction.mem_stabilizer_iff]
+    assumption
+
+lemma kernel_of_permHom : MonoidHom.ker (MulAction.toPermHom G A) = MulAction.kernel G A := by
+  ext x
+  rw [MonoidHom.mem_ker,mem_kernel_iff]
+  constructor
+  · simp
+    intro h a
+    rw [←MulAction.toPerm_apply x a,h]
+    rfl
+  · simp only [MulAction.toPermHom_apply]
+    intro h
+    ext y
+    simp only [MulAction.toPerm_apply]
+    exact h y
+
+instance MulAction.kernel.normal : (MulAction.kernel G A).Normal := by
+  rw [←kernel_of_permHom]
+  exact MonoidHom.normal_ker (MulAction.toPermHom G A)
+
+end Kernel
 
 #print MulAction.orbit
 
 --def in mathlib
 #print MulAction.IsPretransitive
 -- def in note
-def MulAction.IsTransitive (G α : Type) [Group G] [MulAction G α] := ∃ a : α, orbit G a = α
+def MulAction.IsTransitive (G α : Type) [Group G] [MulAction G α] := ∃ a : α, orbit G a = Set.univ
 
 instance IsTrans.IsPretrans (h : IsTransitive G α) : IsPretransitive G α where
   exists_smul_eq := by
     intro x y
     simp [IsTransitive] at h
     obtain ⟨a,ha⟩ := h
-    have hx : x ∈ ↑(orbit G a) := by
-      have : α = @Set.univ α := sorry
-      sorry
-    have hy : y ∈orbit G a := sorry
+    have hx : x ∈ orbit G a := (eq_comm.1 ha) ▸ (Set.mem_univ x)
+    have hy : y ∈orbit G a := (eq_comm.1 ha) ▸ (Set.mem_univ x)
     rw [MulAction.mem_orbit_iff] at hx hy
     obtain ⟨gx,hx⟩ := hx
     obtain ⟨gy,hy⟩ := hy
@@ -36,12 +77,21 @@ instance IsTrans.IsPretrans (h : IsTransitive G α) : IsPretransitive G α where
     rw [←hx, ←mul_smul, mul_assoc]
     simp only [mul_left_inv, mul_one, hy]
 
-lemma IsTrans_of_IsPretrans [IsPretransitive G α] : IsTransitive G α := sorry
+lemma IsTrans_of_IsPretrans [h : IsPretransitive G α] [hne : Nonempty α]: IsTransitive G α := by
+  have := h.exists_smul_eq
+  simp [IsTransitive]
+  rcases hne with ⟨x⟩
+  have := this x
+  use x
+  ext y
+  constructor
+  · intro; simp
+  · intro; exact MulAction.mem_orbit_iff.2 (this y)
 
 /-! Example 1.14 -/
 
-instance : SMul (Equiv.Perm (Fin n)) (Fin n) where
-  smul := fun f x => f x
+variable {n:Nat}
+#synth MulAction (Equiv.Perm (Fin n)) (Fin n)
 
 instance Sn.IsPretransitive : IsPretransitive (Equiv.Perm (Fin n)) (Fin n) where
   exists_smul_eq := by
@@ -50,18 +100,16 @@ instance Sn.IsPretransitive : IsPretransitive (Equiv.Perm (Fin n)) (Fin n) where
     rw [Equiv.Perm.smul_def (Equiv.swap x y) x]
     simp only [Equiv.Perm.smul_def, Equiv.swap_apply_left]
 
--- unsolved! the conjugation action of S3 on itself has 3 orbits
-
 /-! Example 1.15 -/
 -- 1.15 (1)
 #check MulAction.orbit.eq_or_disjoint
 #check MulAction.IsPartition.of_orbits
-#check MulAction.isBlock_orbit
 --1.15 (2)
 #check MulAction.ofQuotientStabilizer
 #check MulAction.orbitEquivQuotientStabilizer
 --1.15 (3)
 #check MulAction.card_orbit_mul_card_stabilizer_eq_card_group
+#check QuotientGroup.leftRel
 lemma card_orbit_dvd_group {a : α} : Nat.card (orbit G a) ∣ (Nat.card G) := by
   rw [Nat.card_congr (orbitEquivQuotientStabilizer G a)]
   apply Subgroup.card_quotient_dvd_card
@@ -104,7 +152,8 @@ namespace ConjAct
 
 #synth MulAction (ConjAct G) G
 
-lemma ofConjAct_eq {G : Type} {g h : G} [Group G] : ofConjAct g = ofConjAct h ↔ g = h := sorry
+lemma ofConjAct_eq {G : Type} {g h : G} [Group G] : ofConjAct g = ofConjAct h ↔ g = h :=
+  @Equiv.apply_eq_iff_eq (ConjAct G) G (@ofConjAct G _) g h
 
 lemma stabilizer_eq_centralizer1 {G : Type} {g : G} [Group G] :
   stabilizer (ConjAct G) g = Subgroup.centralizer {ConjAct.toConjAct g} := by
@@ -127,7 +176,7 @@ lemma stabilizer_univ_eq_center {G : Type} {g : G} [Group G] :
 end ConjAct
 
 #check Equiv.Perm.subgroupOfMulAction
-
+#check Set.smulSet
 lemma prime_factor_aux (nt : 1 < n) (hp : p = (n.factors).head (by
   simp only [ne_eq,Nat.factors_eq_nil, not_or]
   exact (Nat.two_le_iff n).mp nt)) : ∀ a : Nat, a ∣ n ∧ a ∣ p.factorial → a = p := sorry

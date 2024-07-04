@@ -53,58 +53,7 @@ end exp15
 
 /-! Example 1.8 -/
 
-namespace Stabilizer
 
-variable {A : Type*} [MulAction G A]
-#check MulAction.stabilizer
--- def stabilizer (a : α) : Subgroup G :=
---   { MulAction.stabilizerSubmonoid G a with
---     inv_mem' := fun {m} (ha : m • a = a) => show m⁻¹ • a = a by rw [inv_smul_eq_iff, ha] }
-
-def setStabilizer (s : Set A) : Subgroup G := sInf (Set.range (fun a:s => (MulAction.stabilizer G a.1)))
-  --Subgroup.of (IsSubgroup.iInter
-  --(fun a:s => Subgroup.isSubgroup (MulAction.stabilizer G a.1)) )
-
-end Stabilizer
-def MulAction.kernel (G A : Type) [Group G] [MulAction G A] : Subgroup G := Stabilizer.setStabilizer (@Set.univ A)
-/-! Example 1.9 -/
-namespace Kernel
-
-variable [MulAction G A]
-open Stabilizer
-
-lemma mem_kernel_iff {x : G} {A : Type} [MulAction G A] : x ∈ MulAction.kernel G A ↔ ∀ a : A, x • a = a := by
-  constructor
-  · intro h a
-    simp only [MulAction.kernel,Set.mem_range,setStabilizer] at h
-    simp only [Subgroup.mem_sInf, Set.mem_range, Subtype.exists, Set.mem_univ, exists_const,
-      forall_exists_index, forall_apply_eq_imp_iff, MulAction.mem_stabilizer_iff] at h
-    exact h a
-  · intro h
-    simp only [MulAction.kernel,setStabilizer]
-    simp only [Subgroup.mem_sInf, Set.mem_range, Subtype.exists, Set.mem_univ, exists_const,
-      forall_exists_index, forall_apply_eq_imp_iff, MulAction.mem_stabilizer_iff]
-    assumption
-
-lemma kernel_of_permHom : MonoidHom.ker (MulAction.toPermHom G A) = MulAction.kernel G A := by
-  ext x
-  rw [MonoidHom.mem_ker,mem_kernel_iff]
-  constructor
-  · simp
-    intro h a
-    rw [←MulAction.toPerm_apply x a,h]
-    rfl
-  · simp only [MulAction.toPermHom_apply]
-    intro h
-    ext y
-    simp only [MulAction.toPerm_apply]
-    exact h y
-
-instance MulAction.kernel.normal : (MulAction.kernel G A).Normal := by
-  rw [←kernel_of_permHom]
-  exact MonoidHom.normal_ker (MulAction.toPermHom G A)
-
-end Kernel
 
 /-! Example 1.10 -/
 namespace Center
