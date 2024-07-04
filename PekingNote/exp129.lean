@@ -37,6 +37,22 @@ def toPerm (σ : SymmGroup n) : Equiv.Perm (Fin n) := σ
 
 instance : Setoid (SymmGroup n) := IsConj.setoid (SymmGroup n)
 
+instance : MulAction (SymmGroup n) (Fin n) where
+  one_smul := one_apply
+  mul_smul := mul_apply
+
+def p1 : SymmGroup 3 := ⟨![1, 2, 0], ![2, 0, 1], by decide, by decide⟩
+def p2 : SymmGroup 3 := ⟨![0, 2, 1], ![0, 2, 1], by decide, by decide⟩
+def p12 : SymmGroup 3 := c[1, 2]
+def p21 : SymmGroup 3 := c[2, 1]
+
+#eval p12 ∘ p21
+
+/- Example 1.12(2) -/
+def S4_stablizer_eq_S3 : MulAction.stabilizer (SymmGroup 4) (3 : Fin 4) ≃* (SymmGroup 3) := sorry
+
+
+
 def partition (σ : SymmGroup n) : n.Partition where
   parts := σ.cycleType + Multiset.replicate (Fintype.card (Fin n) - σ.support.card) 1
   parts_pos {n hn} := by
@@ -79,9 +95,14 @@ def cananical_perm_of_parts (parts : List ℕ) (cann : List (Fin n)) : SymmGroup
   | ph :: pt => (cann.take ph).formPerm * (cananical_perm_of_parts pt (cann.drop ph))
 
 lemma add_eq_of_cananical_perm (p q : List ℕ) :
-cananical_perm_of_parts (p ++ q) (List.finRange n) =
+  cananical_perm_of_parts (p ++ q) (List.finRange n) =
   cananical_perm_of_parts p (List.finRange n) * cananical_perm_of_parts q (List.finRange n) := by
   sorry
+
+lemma eq_of_cananical_perm (p : List ℕ) (cann1 cann2 : List (Fin n))
+(h : cann1.length >= p.length ∧ cann2.length >= p.length) :
+cananical_perm_of_parts p cann1 = cananical_perm_of_parts p cann2
+:= sorry
 
 -- lemma cycleType_eq_of_cananical_perm {n : ℕ} (σ : SymmGroup n) : σ.cycleType
 
@@ -131,5 +152,6 @@ noncomputable def symmetry_group_ConjClasses_equiv_partition :
     have : ((List.finRange n).take σ.support.card).formPerm.cycleType = σ.cycleType := by sorry
     rw [Disjoint.cycleType cann_disj, this]
     congr 1;
-    sorry; exact hc; exact hd
+    nth_rw 2 [←h2]; rw [eq_of_cananical_perm τ.cycleType.toList _ _]; sorry
+    exact hc; exact hd
   right_inv := sorry
