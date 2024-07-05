@@ -8,6 +8,7 @@ import Mathlib.GroupTheory.Perm.Cycle.Type
 import Mathlib.GroupTheory.Perm.Fin
 import Mathlib.Data.Multiset.Basic
 
+import Mathlib.GroupTheory.SpecificGroups.Cyclic
 
 #check Nat.Partition
 
@@ -21,6 +22,12 @@ abbrev SymmGroup (n : ℕ) := Equiv.Perm <| Fin n
 -- instance symm_group_group (n : ℕ) : Group (SymmGroup n) := @Equiv.Perm.permGroup (Fin n)
 
 namespace Equiv.Perm
+
+lemma orderOf_swap : ∀ (n : ℕ) (i j : Fin n), orderOf (Equiv.swap i j) <= 2 := by
+  intros n i j
+  exact orderOf_le_of_pow_eq_one (by decide)
+    (by rw [pow_two, ext_iff]; intro x; rw [mul_apply (Equiv.swap i j) (Equiv.swap i j) x]; simp)
+
 
 end Equiv.Perm
 
@@ -56,6 +63,26 @@ def p21 : SymmGroup 4 := c[2, 1]
 #eval p12.partition.parts
 #eval (@Finset.univ (SymmGroup 3) _).image fun σ => (ConjClasses.mk σ).unquot
 #eval (@Finset.univ (SymmGroup 3) _).image fun σ => σ.partition.parts
+
+
+def S3_not_cyclic : ¬ IsCyclic (SymmGroup 3) := by
+  intro h
+  rw [isCyclic_iff_exists_ofOrder_eq_natCard] at h
+  have symm3_card : Nat.card (SymmGroup 3) = 6 := by
+    rw [Nat.card_eq_fintype_card, Fintype.card_perm, Fintype.card_fin]; decide
+  contrapose! h
+  intro σ
+  rw [symm3_card]
+  fin_cases σ
+  . simp
+  . simp;
+    have : orderOf (@Equiv.swap (Fin 3) _ 1 2) <= 2 := by
+      exact orderOf_swap 3 (Fin.mk 1 (by simp)) (Fin.mk 2 (by simp))
+    linarith
+  . simp; sorry
+  . simp; sorry
+  . simp; sorry
+  . simp; sorry
 
 /- Generalized version -/
 def Fin_of_Fin_succ_stablizer : MulAction.stabilizer (SymmGroup n.succ) (0 : Fin n.succ) ≃ SymmGroup n where
