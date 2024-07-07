@@ -1,0 +1,5 @@
+{"log":
+ [{"message":
+   ".> /home/slashblade_ubuntu/.elan/toolchains/leanprover--lean4---v4.9.0-rc1/bin/leanc -c -o ././.lake/build/ir/PekingNote.c.o.export ././.lake/build/ir/PekingNote.c -O3 -DNDEBUG -DLEAN_EXPORTING",
+   "level": "trace"}],
+ "depHash": "16067378412896413250"}

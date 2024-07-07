@@ -1,0 +1,43 @@
+{"log":
+ [{"message":
+   ".> LEAN_PATH=././.lake/packages/batteries/.lake/build/lib:././.lake/packages/Qq/.lake/build/lib:././.lake/packages/aesop/.lake/build/lib:././.lake/packages/proofwidgets/.lake/build/lib:././.lake/packages/Cli/.lake/build/lib:././.lake/packages/importGraph/.lake/build/lib:././.lake/packages/mathlib/.lake/build/lib:././.lake/build/lib LD_LIBRARY_PATH=././.lake/build/lib /home/slashblade_ubuntu/.elan/toolchains/leanprover--lean4---v4.9.0-rc3/bin/lean ././././PekingNote/Basic.lean -R ./././. -o ././.lake/build/lib/PekingNote/Basic.olean -i ././.lake/build/lib/PekingNote/Basic.ilean -c ././.lake/build/ir/PekingNote/Basic.c --json",
+   "level": "trace"},
+  {"message":
+   "././././PekingNote/Basic.lean:22:0: Function.End.applyMulAction.{u_6} {α : Type u_6} : MulAction (Function.End α) α",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:29:0: MulAction.toPermHom.{u, v} (α : Type u) (β : Type v) [Group α] [MulAction α β] : α →* Equiv.Perm β",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:30:0: MulAction.bijective.{u, v} {α : Type u} {β : Type v} [Group α] [MulAction α β] (g : α) :\n  Function.Bijective fun x => g • x",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:31:0: MulAction.toPerm_injective.{u, v} {α : Type u} {β : Type v} [Group α] [MulAction α β] [FaithfulSMul α β] :\n  Function.Injective MulAction.toPerm",
+   "level": "info"},
+  {"message": "././././PekingNote/Basic.lean:45:0: ConjAct G : Type",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:46:0: ConjAct.units_smul_def.{u_2} {M : Type u_2} [Monoid M] (g : ConjAct Mˣ) (h : M) :\n  g • h = ↑(ConjAct.ofConjAct g) * h * ↑(ConjAct.ofConjAct g)⁻¹",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:47:0: ConjAct.unitsMulDistribMulAction.{u_2} {M : Type u_2} [Monoid M] : MulDistribMulAction (ConjAct Mˣ) M",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:51:0: MulAction.quotient.{u, v} {α : Type u} (β : Type v) [Group α] [Monoid β] [MulAction β α] (H : Subgroup α)\n  [MulAction.QuotientAction β H] : MulAction β (α ⧸ H)",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:52:0: MulAction.Quotient.smul_mk.{u, v} {α : Type u} {β : Type v} [Group α] [Monoid β] [MulAction β α] (H : Subgroup α)\n  [MulAction.QuotientAction β H] (b : β) (a : α) : b • ↑a = ↑(b • a)",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:59:0: MulAction.stabilizer.{u_2, u_1} (G : Type u_1) {α : Type u_2} [Group G] [MulAction G α] (a : α) : Subgroup G",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:112:0: Subgroup.centralizer.{u_1} {G : Type u_1} [Group G] (s : Set G) : Subgroup G",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:113:0: Subgroup.center.{u_1} (G : Type u_1) [Group G] : Subgroup G",
+   "level": "info"},
+  {"message":
+   "././././PekingNote/Basic.lean:114:0: Subgroup.normalizer.{u_1} {G : Type u_1} [Group G] (H : Subgroup G) : Subgroup G",
+   "level": "info"}],
+ "depHash": "18256265889192363066"}
