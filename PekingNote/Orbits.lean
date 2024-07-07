@@ -6,7 +6,7 @@ import Mathlib.GroupTheory.Index
 import Mathlib.Deprecated.Subgroup
 import Mathlib.GroupTheory.Perm.Subgroup
 import Mathlib.Data.Nat.Factors
-
+import Mathlib.Data.Nat.PrimeFin
 
 open MulAction Classical
 open scoped Pointwise
@@ -15,6 +15,25 @@ variable {G α : Type} [Group G] [MulAction G α]
 
 variable {A : Type} [MulAction G A]
 #check MulAction.stabilizer
+
+section Aux
+lemma Subgroup.subset_of_le [Group G] {H K : Subgroup G} : H ≤ K → H.carrier ⊆ K.carrier :=
+  fun h => (fun _ hx => h hx)
+
+lemma Subgroup.card_le_card [Group G] {H K : Subgroup G} [Fintype H] [Fintype K] (le : H ≤ K) :
+  Fintype.card H ≤ Fintype.card K := by
+    have : H.carrier ⊆ K.carrier := fun x hx => le hx
+    exact Set.card_le_card this
+
+lemma prime_factor_aux (nt : 1 < n) (hp : p = (n.factors).head (by
+  simp only [ne_eq,Nat.factors_eq_nil, not_or]
+  exact (Nat.two_le_iff n).mp nt)) : ∀ a : Nat, a ∣ n ∧ a ∣ p.factorial  → a = p ∨ a = 1:= by
+    intro a ha
+    have h1 := Nat.primeFactors_mono ha.1 sorry
+    have h2 : ∀ q ∈ a.primeFactors, p ≤ q := fun q hq => (by have := h1 hq; sorry)
+    sorry
+
+end Aux
 
 def setStabilizer (s : Set A) : Subgroup G := sInf (Set.range (fun a:s => (MulAction.stabilizer G a.1)))
 
@@ -26,9 +45,7 @@ namespace Kernel
 lemma mem_kernel_iff {x : G} {A : Type} [MulAction G A] : x ∈ MulAction.kernel G A ↔ ∀ a : A, x • a = a := by
   constructor
   · intro h a
-    simp only [MulAction.kernel,Set.mem_range,setStabilizer] at h
-    simp only [Subgroup.mem_sInf, Set.mem_range, Subtype.exists, Set.mem_univ, exists_const,
-      forall_exists_index, forall_apply_eq_imp_iff, MulAction.mem_stabilizer_iff] at h
+    simp [MulAction.kernel,Set.mem_range,setStabilizer] at h
     exact h a
   · intro h
     simp only [MulAction.kernel,setStabilizer]
@@ -50,11 +67,31 @@ lemma kernel_of_permHom : MonoidHom.ker (MulAction.toPermHom G A) = MulAction.ke
     simp only [MulAction.toPerm_apply]
     exact h y
 
-instance MulAction.kernel.normal : (MulAction.kernel G A).Normal := by
+instance : (MulAction.kernel G A).Normal := by
   rw [←kernel_of_permHom]
   exact MonoidHom.normal_ker (MulAction.toPermHom G A)
 
+noncomputable def quotient_equiv : G ⧸ (MulAction.kernel G A) ≃ (toPermHom G A).range := by
+  have := QuotientGroup.quotientKerEquivRange (MulAction.toPermHom G A)
+  exact ((Subgroup.quotientEquivOfEq (@kernel_of_permHom G _ A _) ).symm).trans (this.toEquiv)
+
 end Kernel
+
+#check MulAction.stabilizer_quotient
+lemma quotient_action_kernel_le [Group G] (H : Subgroup G): MulAction.kernel G (G ⧸ H) ≤ H := by
+  intro x h
+  rw [Kernel.mem_kernel_iff] at h
+  exact MulAction.stabilizer_quotient H ▸ (MulAction.mem_stabilizer_iff.2 <| h (1 : G))
+
+
+lemma eq_of_le_of_card_eq [Group G] {K H : Subgroup G} [Fintype K] [Fintype H] (le : K ≤ H)
+  (card_eq : Fintype.card K = Fintype.card H) : K = H := by
+    have KssH : K.carrier ⊆ H.carrier := fun x hx => le hx
+    have := Finset.eq_of_subset_of_card_le (Set.toFinset_subset_toFinset.2 KssH)
+    simp only [Set.toFinset_card, Set.toFinset_inj] at this
+    have carrier_eq := this <| le_of_eq card_eq.symm
+    ext x
+    simp_rw [←Subgroup.mem_carrier,carrier_eq]
 
 #print MulAction.orbit
 
@@ -129,7 +166,7 @@ lemma card_orbit_dvd_group {a : α} : Nat.card (orbit G a) ∣ (Nat.card G) := b
 #synth AddGroup ℤ
 
 def Int_even := {n : ℤ| Even n}
-
+#check ZMod 2
 instance evenAddSubgroup : AddSubgroup ℤ where
   carrier := Int_even
   add_mem' := by simp [Int_even]; intros a b ha hb; exact Even.add ha hb
@@ -177,44 +214,44 @@ end ConjAct
 
 #check Equiv.Perm.subgroupOfMulAction
 #check Set.smulSet
-lemma prime_factor_aux (nt : 1 < n) (hp : p = (n.factors).head (by
-  simp only [ne_eq,Nat.factors_eq_nil, not_or]
-  exact (Nat.two_le_iff n).mp nt)) : ∀ a : Nat, a ∣ n ∧ a ∣ p.factorial → a = p := sorry
 
-lemma p_index_subgroup_normal  [Group G] [Fintype G] (nt : 1 < n) (h : Fintype.card G = n) (hnt : n.factors ≠ [] := by
+    -- let q := Classical.choice <| Finset.Nonempty.to_subtype <| Nat.nonempty_primeFactors.2
+    -- have hq := h2 q q.2
+    -- by_cases hqq : p = q
+    -- · sorry
+    -- · sorry
+
+lemma p_index_subgroup_normal  [Group G] [Fintype G] (nt : 1 < n) (h : Fintype.card G = n)
+  (hnt : n.factors ≠ [] := by
   simp only [ne_eq,Nat.factors_eq_nil, not_or]
   exact (Nat.two_le_iff n).mp nt) (hp : p = (n.factors).head hnt) :
     ∀ H : Subgroup G, H.index = p → H.Normal := by
       intro H Hind
       let K := MulAction.kernel G (G⧸H)
-      --have ker := @Kernel.kernel_of_permHom (G⧸H) G _ _
-      have iso := QuotientGroup.quotientKerEquivRange (MulAction.toPermHom G (G⧸H))
-      have : G⧸K ≃* (toPermHom G (G ⧸ H)).range := by
-        sorry
+      have : G⧸K ≃ (toPermHom G (G ⧸ H)).range := Kernel.quotient_equiv
       have card_dvd : Fintype.card (G ⧸ K) ∣ Fintype.card (Equiv.Perm (G⧸H)) := by
-        rw [Fintype.card_congr <| MulEquiv.toEquiv this]
+        rw [Fintype.card_congr <| this]
         have := Subgroup.card_subgroup_dvd_card (MonoidHom.range <| toPermHom G (G⧸H))
         simp only [Nat.card_eq_fintype_card] at this
         assumption
-      rw [Fintype.card_perm] at card_dvd
       have cardG := Subgroup.card_eq_card_quotient_mul_card_subgroup K
-      rw [←Subgroup.index_eq_card H, Hind] at card_dvd
+      rw [Fintype.card_perm,←Subgroup.index_eq_card H, Hind] at card_dvd
       repeat
         rw [Nat.card_eq_fintype_card] at cardG
       rw [h] at cardG
       have card_dvd' : Fintype.card (G ⧸ K) ∣ n := by simp only [cardG, dvd_mul_right]
       have cardGK := prime_factor_aux nt hp (Fintype.card (G ⧸ K)) ⟨card_dvd',card_dvd⟩
-      rw [cardGK] at cardG
-      have cardG' := Subgroup.index_mul_card H
-      rw [Hind, h] at cardG'
-      have : Fintype.card H = Fintype.card K := by
-        rw [cardG] at cardG'
-        exact Nat.mul_left_cancel (Nat.pos_of_mem_factors (hp ▸ (List.head_mem hnt) )) cardG'
-      have KssH : ∀ g ∈ K, g ∈ H := by
-        intro g memK
-        have := Kernel.mem_kernel_iff.1 memK ⟦1⟧
-        simp only at this
-        sorry
-      have KeqH : K = H := sorry
-      rw [←KeqH]
-      apply Kernel.MulAction.kernel.normal
+      cases cardGK with
+      | inl hl =>
+        rw [hl] at cardG
+        have cardG' := Subgroup.index_mul_card H
+        rw [Hind, h] at cardG'
+        have : Fintype.card H = Fintype.card K := by
+          rw [cardG] at cardG'
+          exact Nat.mul_left_cancel (Nat.pos_of_mem_factors (hp ▸ (List.head_mem hnt) )) cardG'
+        exact (eq_of_le_of_card_eq (quotient_action_kernel_le H) this.symm) ▸ Kernel.instNormalKernel
+      | inr hr =>
+        rw [hr, one_mul] at cardG
+        have cardG_le := le_of_eq_of_le cardG (Subgroup.card_le_card <| quotient_action_kernel_le H)
+        rw [←h, ←Nat.card_eq_fintype_card, ←Nat.card_eq_fintype_card] at cardG_le
+        exact (Subgroup.eq_top_of_le_card H cardG_le).symm ▸ (Subgroup.Normal.mk <| (fun _ _ => by simp))
