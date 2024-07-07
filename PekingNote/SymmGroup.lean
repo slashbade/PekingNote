@@ -95,6 +95,10 @@ lemma S3_not_cyclic' : ¬ IsCyclic (SymmGroup 3) := by
   have hc : x1 * x2 ≠ x2 * x1 := by unfold_let; decide
   exact hc h
 
+/- Example 1.12(2) Computational verification -/
+#eval @Finset.univ (MulAction.stabilizer (SymmGroup 4) (0 : Fin 4)).carrier _
+#eval @Finset.univ (SymmGroup 3) _
+
 /- Example 1.12(2) Generalized version -/
 def Fin_of_Fin_succ_stablizer : MulAction.stabilizer (SymmGroup n.succ) (0 : Fin n.succ) ≃ SymmGroup n where
   toFun s := (decomposeFin s.1).2
@@ -110,11 +114,27 @@ def Fin_of_Fin_succ_stablizer : MulAction.stabilizer (SymmGroup n.succ) (0 : Fin
 def S4_stablizer_eq_S3 : MulAction.stabilizer (SymmGroup 4) (0 : Fin 4) ≃ SymmGroup 3 :=
   Fin_of_Fin_succ_stablizer
 
-/- Example 1.12(2) Computational verification -/
-#eval @Finset.univ (MulAction.stabilizer (SymmGroup 4) (0 : Fin 4)).carrier _
-#eval @Finset.univ (SymmGroup 3) _
 
 /- Example 1.29 -/
+
+namespace List
+
+theorem cycleType_formPerm (l : List (Fin n)) (hl : l.Nodup) (hn : 2 ≤ l.length) :
+    l.formPerm.cycleType = [l.length] := by
+    rw [cycleType_eq [l.formPerm]]
+    . simp
+      rw [List.support_formPerm_of_nodup _ hl, List.card_toFinset, List.dedup_eq_self.mpr hl]
+      simp; intro x h; simp [h, Nat.succ_le_succ_iff] at hn;
+    . simp;
+    . simpa using List.isCycle_formPerm hl hn
+    simp;
+
+lemma Nodup.take {α : Type*} (l : List α) (hl : l.Nodup) (n : ℕ) : (l.take n).Nodup :=
+  List.Nodup.sublist (List.take_sublist n l) hl
+
+end List
+
+
 def partition (σ : SymmGroup n) : n.Partition where
   parts := σ.cycleType + Multiset.replicate (Fintype.card (Fin n) - σ.support.card) 1
   parts_pos {n hn} := by
@@ -124,9 +144,6 @@ def partition (σ : SymmGroup n) : n.Partition where
   parts_sum := by
     rw [sum_add, sum_cycleType, Multiset.sum_replicate, nsmul_eq_mul, Nat.cast_id, mul_one,
       add_tsub_cancel_of_le σ.support.card_le_univ, Fintype.card_fin]
-
--- theorem parts_partition_filter {p : n.partition} :
---   p.parts = p.parts.filter (2 <= ·) + Multiset.replicate (n - )
 
 theorem parts_partition {σ : SymmGroup n} :
     σ.partition.parts = σ.cycleType + Multiset.replicate (Fintype.card (Fin n) - σ.support.card) 1 :=
@@ -177,7 +194,28 @@ lemma partition_eq_of_cananical_perm (p : n.Partition) :
   simp_rw [← Multiset.filter_coe, Multiset.coe_toList];
   have h_sum : p.parts = (filter (2 <= ·) p.parts) + (filter (· < 2) p.parts) := by
     nth_rw 1 [← Multiset.filter_add_not (2 <= ·) p.parts]; congr 2; simp;
-  have h : (filter (· < 2) p.parts) = replicate (filter (· < 2) p.parts).sum 1 := by sorry
+  have h : (filter (· < 2) p.parts) = replicate (filter (· < 2) p.parts).sum 1 := by
+    ext pt;
+    rw [count_filter, count_replicate];
+    match pt with
+    | 0 =>
+      rw [if_pos (by linarith), if_neg (by linarith)];
+      simp only [count_eq_zero]; by_contra hn; exact Eq.not_lt (rfl) (p.parts_pos (hn))
+    | 1 =>
+      rw [if_pos (by linarith), if_pos (rfl)];
+      have : p.parts.filter (· < 2) = p.parts.filter (· = 1) := by
+        calc
+          p.parts.filter (· < 2) = p.parts.filter fun x => x = 1 ∨ x = 0 := filter_congr (fun x _ => by {
+            exact not_iff_not.mp (by push_neg; rw [and_comm]; exact Nat.two_le_iff x)})
+          _ = p.parts.filter (fun x => x = 1 ∨ x = 0) + p.parts.filter fun x => x = 1 ∧ x = 0 := by
+            nth_rw 3 [filter_eq_nil.mpr (fun a _ => by by_contra ha; nth_rw 2 [ha.1] at ha; linarith)]; simp;
+          _ = p.parts.filter (· = 1) + p.parts.filter (· = 0) := by rw [Eq.comm, filter_add_filter (· = 1) (· = 0) p.parts]
+          _ = p.parts.filter (· = 1) := by
+            simp only [add_right_eq_self]; rw [filter_eq_nil]; intro a ha; by_contra hn; rw [hn] at ha;
+            exact Eq.not_lt (rfl) (p.parts_pos (ha))
+      rw [this, filter_eq', sum_replicate, smul_eq_mul, mul_one]
+    | n + 2 =>
+      rw [if_neg (by linarith), if_neg (by linarith)]
   nth_rw 4 [h_sum]; congr; rw [h]; congr;
   rw [Nat.sub_eq_iff_eq_add, add_comm, ← Multiset.sum_add]; congr;
   nth_rw 2 [h_sum]; simp_rw [Multiset.sum_add]; simp
