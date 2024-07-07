@@ -174,8 +174,8 @@ def cananical_perm_of_parts (parts : List ℕ) (cann : List (Fin n)) : SymmGroup
   | ph :: pt => (cann.take ph).formPerm * (cananical_perm_of_parts pt (cann.drop ph))
 
 
-lemma cycleType_eq_of_cananical_perm (p : List ℕ) (cann : List (Fin n)) :
-  (cananical_perm_of_parts p cann).cycleType = p := by
+lemma cycleType_eq_of_cananical_perm (p : List ℕ) (cann : List (Fin n)) (hp : ∀ x ∈ p, 2 <= x)
+  (hc : ph <= cann.length) : (cananical_perm_of_parts p cann).cycleType = p := by
   induction' p with ph pt ih generalizing cann
   . simp [cananical_perm_of_parts]
   . simp [cananical_perm_of_parts]
@@ -185,7 +185,8 @@ lemma cycleType_eq_of_cananical_perm (p : List ℕ) (cann : List (Fin n)) :
     nth_rw 2 [← Multiset.cons_coe]
     nth_rw 1 [← singleton_add]
     congr 1
-    exact ih (cann.drop ph)
+    have hpi : ∀ x ∈ pt, 2 <= x := fun x hx => hp x (List.mem_cons_of_mem ph hx)
+    exact ih (cann.drop ph) hpi
 
 lemma partition_eq_of_cananical_perm (p : n.Partition) :
   (cananical_perm_of_parts (p.parts.toList.filter (2 <= ·)) (List.finRange n)).partition = p := by
