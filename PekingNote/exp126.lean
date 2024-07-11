@@ -22,6 +22,15 @@ Some basic lemmas about Finset and Multiset are provided here.
 
 -/
 
+section sumType
+
+-- def sigmaFiberEquiv' {α β : Type*} (f : α → β) : (Σ y : β, { x // f x = y }) ≃ α where
+  -- toFun a := a.2
+  -- invFun b := ⟨⟩
+
+end sumType
+
+
 namespace Finset
 
 lemma sum_const' {α : Type*} (s : Finset α) (n : ℕ) : ∑ _x ∈ s, n = card s • n := by
@@ -69,7 +78,9 @@ theorem sum_conjClasses_card_eq_card'  [Fintype G] :
   suffices h_equiv : (Σ x : ConjClasses G, x.carrier) ≃ G by
     simpa using (card_congr h_equiv)
   /- The proof of the equivalence is based on the bijection between the carrier of a conjugacy class and the conjugacy class itself -/
-  simpa [carrier_eq_preimage_mk] using Equiv.sigmaFiberEquiv ConjClasses.mk
+  simp only [carrier_eq_preimage_mk]
+  exact Equiv.sigmaFiberEquiv ConjClasses.mk
+  -- simpa [carrier_eq_preimage_mk] using Equiv.sigmaFiberEquiv ConjClasses.mk
 
 /-!
 Class Equation for Finite Groups

@@ -11,6 +11,11 @@ import Mathlib.Combinatorics.Enumerative.Partition
 /-!
 =============
   SymmGroup
+=============
+
+Definition of Symmetry Group
+============================
+
 -/
 
 open Equiv.Perm
@@ -20,15 +25,10 @@ variable {α : Type*} [Fintype α] [DecidableEq α]
 
 abbrev SymmGroup (n : ℕ) := Equiv.Perm <| Fin n
 
-namespace Equiv.Perm
-
-lemma orderOf_swap : ∀ (n : ℕ) (i j : Fin n), orderOf (Equiv.swap i j) <= 2 := by
+lemma Equiv.Perm.orderOf_swap : ∀ (n : ℕ) (i j : Fin n), orderOf (Equiv.swap i j) <= 2 := by
   intros n i j
   exact orderOf_le_of_pow_eq_one (by decide)
     (by rw [pow_two, ext_iff]; intro x; rw [mul_apply (Equiv.swap i j) (Equiv.swap i j) x]; simp)
-
-end Equiv.Perm
-
 
 
 namespace SymmGroup
@@ -45,7 +45,7 @@ def toPerm (σ : SymmGroup n) : Equiv.Perm (Fin n) := σ
 
 instance : Setoid (SymmGroup n) := IsConj.setoid (SymmGroup n)
 
-instance : Fintype (SymmGroup n) := by infer_instance
+instance : Fintype (SymmGroup n) := inferInstance
 
 instance : MulAction (SymmGroup n) (Fin n) where
   one_smul := one_apply
@@ -53,17 +53,18 @@ instance : MulAction (SymmGroup n) (Fin n) where
 
 def p1 : SymmGroup 3 := ⟨![1, 2, 0], ![2, 0, 1], by decide, by decide⟩
 def p2 : SymmGroup 3 := ⟨![0, 2, 1], ![0, 2, 1], by decide, by decide⟩
-def p12 : SymmGroup 5 := c[0, 4, 1]
+def p12 : SymmGroup 4 := c[0, 3, 1]
 def p21 : SymmGroup 4 := c[2, 1]
 
-#check Finset.instRepr
+#check repr_perm
+#check Fintype.decidableEqEquivFintype
 
--- #eval p12 ∘ p21
-#eval @decomposeFin 4 p12
-#eval p12.partition.parts
+
+#eval p12 * p21
 #eval (@Finset.univ (SymmGroup 3) _).image fun σ => (ConjClasses.mk σ).unquot
 #eval (@Finset.univ (SymmGroup 3) _).image fun σ => σ.partition.parts
 #eval (Subgroup.center (SymmGroup 3)).carrier.toFinset
+#eval @decomposeFin 3 p12
 
 /- Example 1.33(2) A Demonstration for case-by-case proof -/
 lemma S3_not_cyclic : ¬ IsCyclic (SymmGroup 3) := by
@@ -132,6 +133,14 @@ theorem cycleType_formPerm (l : List (Fin n)) (hl : l.Nodup) (hn : 2 ≤ l.lengt
 lemma Nodup.take {α : Type*} (l : List α) (hl : l.Nodup) (n : ℕ) : (l.take n).Nodup :=
   List.Nodup.sublist (List.take_sublist n l) hl
 
+lemma Nodup.drop {α : Type*} (l : List α) (hl : l.Nodup) (n : ℕ) : (l.drop n).Nodup :=
+  List.Nodup.sublist (List.drop_sublist n l) hl
+
+lemma subset_of_take_add {α : Type*} (l : List α) (m n : ℕ) : l.take m ⊆ l.take (m + n) := by
+  rw [List.take_add]; exact List.subset_append_left _ _
+
+
+
 end List
 
 
@@ -161,10 +170,9 @@ lemma card_support_le_card {σ : SymmGroup n} : σ.support.card ≤ n := by
   exact σ.support.card_le_univ
 
 theorem partition_eq_of_isConj {σ τ : SymmGroup n} : IsConj σ τ ↔ σ.partition = τ.partition := by
-  rw [isConj_iff_cycleType_eq]
+  rw [@isConj_iff_cycleType_eq _ _ _ σ τ]
   refine ⟨fun h => ?_, fun h => ?_⟩
-  · rw [Nat.Partition.ext_iff, parts_partition, parts_partition, ← sum_cycleType, ← sum_cycleType,
-      h]
+  · rw [Nat.Partition.ext_iff, parts_partition, parts_partition, ← sum_cycleType, ← sum_cycleType, h]
   · rw [← filter_parts_partition_eq_cycleType, ← filter_parts_partition_eq_cycleType, h]
 
 /- This is an aux fcn so so that the ones are filtered -/
@@ -174,23 +182,71 @@ def cananical_perm_of_parts (parts : List ℕ) (cann : List (Fin n)) : SymmGroup
   | ph :: pt => (cann.take ph).formPerm * (cananical_perm_of_parts pt (cann.drop ph))
 
 
-lemma cycleType_eq_of_cananical_perm (p : List ℕ) (cann : List (Fin n)) :
-  (cananical_perm_of_parts p cann).cycleType = p := by
+lemma List.formPerm_disjoint_of_subset {σ : Equiv.Perm α} (l₁ l₂ : List α) (h : l₁ ⊆ l₂) (hl₁ : l₁.Nodup) (hl₂ : l₂.Nodup):
+  l₂.formPerm.Disjoint σ → l₁.formPerm.Disjoint σ := by
+  intro hd
+  sorry
+
+lemma cycleType_eq_of_cananical_perm (p : List ℕ) (cann : List (Fin n)) (hp : ∀ x ∈ p, 2 <= x)
+  (hsum : p.sum <= cann.length) (hnd : cann.Nodup) : (cananical_perm_of_parts p cann).cycleType = p := by
   induction' p with ph pt ih generalizing cann
   . simp [cananical_perm_of_parts]
   . simp [cananical_perm_of_parts]
-    have : (cann.take ph).formPerm.Disjoint (cananical_perm_of_parts pt (cann.drop ph)) := by sorry
-    have h_sgt : (cann.take ph).formPerm.cycleType = [ph] := by sorry
-    rw [Disjoint.cycleType this, h_sgt]
+    simp only [List.sum_cons] at hsum; rw [add_comm] at hsum;
+    have h_tk_l : (cann.take ph).length = ph := by
+      rw [List.length_take];exact min_eq_left (le_of_add_le_right hsum)
+    have h_disj: (cann.take ph).formPerm.Disjoint (cananical_perm_of_parts pt (cann.drop ph)) := by
+      induction' pt with pth ptt tih generalizing ph
+      . simp [cananical_perm_of_parts]
+      simp [cananical_perm_of_parts];
+      apply Equiv.Perm.Disjoint.mul_right
+      . rw [List.formPerm_disjoint_iff]
+        . exact List.disjoint_of_subset_right (List.take_subset pth _)
+            (List.disjoint_take_drop hnd (by linarith))
+        . exact List.Nodup.take cann hnd ph
+        . exact List.Nodup.take _ (List.Nodup.drop cann hnd _) pth
+        . rw [h_tk_l]; exact hp ph (List.mem_cons_self ph _)
+        simp only [List.length_take, List.length_drop, le_min_iff];
+        simp only [List.sum_cons] at hsum;
+        have h2le : 2 <= pth := hp pth (List.mem_cons_of_mem ph (List.mem_cons_self pth _))
+        nth_rw 2 [add_comm] at hsum; rw [add_assoc] at hsum
+        exact ⟨h2le, Nat.le_sub_of_add_le (add_le_of_add_le_right (le_of_add_le_right hsum) h2le)⟩
+      rw [add_comm]; apply List.formPerm_disjoint_of_subset _ _ (List.subset_of_take_add _ _ _)
+        (List.Nodup.take _ hnd _) _ (tih (ph + pth) ?_ ?_ ?_ ?_)
+      . exact List.Nodup.take cann hnd (ph + pth)
+      . sorry
+      . intro x hx; rw [List.mem_cons] at hx; rcases hx with hx1 | hx2
+        . rw [hx1]; exact Nat.le_trans (hp ph (List.mem_cons_self ph _)) (Nat.le_add_right _ _)
+        exact hp x (List.mem_cons_of_mem ph (List.mem_cons_of_mem pth hx2))
+      . simp at hsum; rw [←add_assoc, add_comm, ←add_assoc]; exact hsum
+      simp; simp at hsum; rw [add_comm, ←add_assoc] at hsum; exact le_trans (Nat.le_add_right _ _) hsum
+    have h_sgt : (cann.take ph).formPerm.cycleType = [ph] := by
+      rw [List.cycleType_formPerm]
+      . rw [h_tk_l]
+      . exact List.Nodup.take cann hnd ph
+      rw [h_tk_l]; exact hp ph (List.mem_cons_self ph pt)
+    rw [Disjoint.cycleType h_disj, h_sgt]
     nth_rw 2 [← Multiset.cons_coe]
     nth_rw 1 [← singleton_add]
     congr 1
-    exact ih (cann.drop ph)
+    have hpi : ∀ x ∈ pt, 2 <= x := fun x hx => hp x (List.mem_cons_of_mem ph hx)
+    have hsumi : pt.sum ≤ (List.drop ph cann).length := by
+
+      simp only [List.length_drop]; exact Nat.le_sub_of_add_le hsum;
+    exact ih (cann.drop ph) hpi hsumi (List.Nodup.drop cann hnd ph)
 
 lemma partition_eq_of_cananical_perm (p : n.Partition) :
   (cananical_perm_of_parts (p.parts.toList.filter (2 <= ·)) (List.finRange n)).partition = p := by
   simp_rw [Nat.Partition.ext_iff, parts_partition, ← sum_cycleType, Fintype.card_fin]
-  simp_rw [cycleType_eq_of_cananical_perm _, ← p.parts_sum];
+  have hp : ∀ x ∈ p.parts.toList.filter (2 <= ·), 2 <= x := fun x =>
+    by rw [List.mem_filter]; intro h; exact of_decide_eq_true h.2
+  have hsum : (p.parts.toList.filter (2 <= ·)).sum <= (List.finRange n).length := by
+    rw [List.length_finRange];
+    have h_le : (p.parts.toList.filter (2 <= ·)).sum <= p.parts.toList.sum :=
+      List.Sublist.sum_le_sum (List.filter_sublist p.parts.toList)
+        (fun x hx => le_of_lt <| p.parts_pos <| mem_toList.mp hx)
+    rw [sum_toList, p.parts_sum] at h_le; exact h_le
+  simp_rw [cycleType_eq_of_cananical_perm _ _ hp hsum (List.nodup_finRange n), ← p.parts_sum];
   simp_rw [← Multiset.filter_coe, Multiset.coe_toList];
   have h_sum : p.parts = (filter (2 <= ·) p.parts) + (filter (· < 2) p.parts) := by
     nth_rw 1 [← Multiset.filter_add_not (2 <= ·) p.parts]; congr 2; simp;
