@@ -24,9 +24,15 @@ Some basic lemmas about Finset and Multiset are provided here.
 
 section sumType
 
--- def sigmaFiberEquiv' {α β : Type*} (f : α → β) : (Σ y : β, { x // f x = y }) ≃ α where
-  -- toFun a := a.2
-  -- invFun b := ⟨⟩
+def sigmaFiberEquiv' {α β : Type*} (f : α → β) : (Σ y : β, { x // f x = y }) ≃ α where
+  toFun := fun ⟨b, a, ha⟩ => a
+  invFun a := ⟨f a, a, rfl⟩
+  left_inv := by
+    rintro ⟨b, a, hab⟩;
+    simp only [Sigma.mk.inj_iff];
+    constructor; exact hab; sorry
+  right_inv := by intro x; simp
+  -- fun _ => by rfl
 
 end sumType
 
