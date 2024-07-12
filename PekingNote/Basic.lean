@@ -33,11 +33,11 @@ instance : MulAction G G where
 /-! Example 1.5 -/
 namespace exp15
 
--- instance trivial_smul {G α : Type} [Group G] : SMul G α where
---   smul := fun g a => a
--- instance trivial_mul_action {G α : Type} [Group G] : MulAction G α where
---   one_smul := fun _ => rfl
---   mul_smul := fun _ _ _ => rfl
+instance trivial_smul {G α : Type} [Group G] : SMul G α where
+  smul := fun g a => a
+instance trivial_mul_action {G α : Type} [Group G] : MulAction G α where
+  one_smul := fun _ => rfl
+  mul_smul := fun _ _ _ => rfl
 end exp15
 
 

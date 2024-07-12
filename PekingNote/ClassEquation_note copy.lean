@@ -1,15 +1,17 @@
 import Mathlib.Algebra.Group.ConjFinite
 import Mathlib.GroupTheory.Subgroup.Center
 import Mathlib.GroupTheory.ClassEquation
+import Mathlib.GroupTheory.GroupAction.ConjAct
 /-!
-##################################
-  From List to Conjugacy Classes
-##################################
+########################################################
+  Group Actions, Conjugacy Classes, and Class Equation
+########################################################
 
-- Construction of List, Monoid Property
-- Construct of Quotients Type, Sum Type
-- From List to Multiset and Finset
+- Basic API of Group Actions
+- Construct of Sum Type and lemmas
+- Multiset.card and Finset.card, and card
 - Summation of Finset
+- Proof of Class Equation
 
 -/
 
@@ -22,39 +24,74 @@ Some basic lemmas about Finset and Multiset are provided here.
 
 -/
 
-section sumType
+section MulAction
 
+variable {G : Type} [Group G]
+
+#check MulAction
+
+/- Left Action by Group Multiplication -/
+#synth SMul G G
+
+instance : MulAction G G where
+  one_smul := one_mul
+  mul_smul := mul_assoc
+
+/- Trivial Action on Group -/
+
+/- Natural Action for Symmetric Group -/
+
+/- Conjugacy Action for Group -/
+
+end MulAction
+
+section Conj
+
+#check IsConj.setoid
+
+end Conj
+
+/-!
+=======================
+  Sigma Type in Lean
+=======================
+
+-/
+section SigmaType
+
+#check Sigma
+
+/-! A basic equivalence for Sigma Type-/
 def sigmaFiberEquiv' {α β : Type*} (f : α → β) : (Σ y : β, { x // f x = y }) ≃ α where
   toFun := fun ⟨b, a, ha⟩ => a
   invFun a := ⟨f a, a, rfl⟩
   left_inv := by
-    rintro ⟨b, a, hab⟩;
-    simp only [Sigma.mk.inj_iff];
-    constructor; exact hab; sorry
+    rintro ⟨b, a, rfl⟩
+    simp only [Sigma.mk.inj_iff]
   right_inv := by intro x; simp
-  -- fun _ => by rfl
-
-end sumType
 
 
 namespace Finset
 
-lemma sum_const' {α : Type*} (s : Finset α) (n : ℕ) : ∑ _x ∈ s, n = card s • n := by
-  rw [← Multiset.sum_replicate s.card n, Finset.card_def, ← s.val.map_const n]; congr;
+lemma sum_const' {α : Type*} (s : Finset α) (n : ℕ) : ∑ _x ∈ s, n = card s • n := sorry
 
-lemma card_eq_sum_ones' {α : Type*} (s : Finset α) : card s = ∑ x ∈ s, 1 := by
-  simp only [sum_const, smul_eq_mul, mul_one]
+lemma card_eq_sum_ones' {α : Type*} (s : Finset α) : card s = ∑ x ∈ s, 1 := sorry
 
 end Finset
+
+#check Sigma.instFintype
+end SigmaType
+
+section card
+
+end card
 
 /-!
 ===========================
   Proof of Class Equation
 ===========================
 
-This file contains the proof of the class equation for finite groups. Class equation is stated as cardinality of a group is equal to the size of its center plus the sum of the size of all its nontrivial conjugacy classes.
-
-Class equation itself has been proved in Mathlib. However, the proof touched with too many `simp` lemmas, and the proof is not easy to understand. This file provides a new proof of the class equation, which is more readable and understandable.
+Class equation is stated as cardinality of a group is equal to the size of its center plus the sum of the size of all its nontrivial conjugacy classes.
 
 .. default-role:: lean4
 
@@ -80,10 +117,10 @@ Partition of Group by Conjugacy Classes
 Conjugacy classes form a partition of G, stated in terms of cardinality. -/
 theorem sum_conjClasses_card_eq_card'  [Fintype G] :
     ∑ x : ConjClasses G, card x.carrier = card G := by
-  /- To prove the lemma, it suffices to show that conjugacy classes do form a partition of G -/
   suffices h_equiv : (Σ x : ConjClasses G, x.carrier) ≃ G by
-    simpa using (card_congr h_equiv)
-  /- The proof of the equivalence is based on the bijection between the carrier of a conjugacy class and the conjugacy class itself -/
+  /- Rewrite the goal in terms of cardinality -/
+    rw [← Fintype.card_sigma]
+    exact card_congr h_equiv
   simp only [carrier_eq_preimage_mk]
   exact Equiv.sigmaFiberEquiv ConjClasses.mk
   -- simpa [carrier_eq_preimage_mk] using Equiv.sigmaFiberEquiv ConjClasses.mk
@@ -93,6 +130,10 @@ Class Equation for Finite Groups
 ================================
 
 The cardinality of a group is equal to the size of its center plus the sum of the size of all its nontrivial conjugacy classes. -/
+#check mk_bijOn
+#check Set.toFinset_card
+#check Set.toFinset_compl
+#check Finset.compl_eq_univ_sdiff
 theorem Group.nat_card_center_add_sum_card_noncenter_eq_card' [Fintype G]:
   card (Subgroup.center G) + ∑ x ∈ noncenter G, card x.carrier = card G := by
   /- Rewrite `G` as partitioned by its conjugacy classes -/
@@ -100,14 +141,11 @@ theorem Group.nat_card_center_add_sum_card_noncenter_eq_card' [Fintype G]:
   /- Cancel out nontrivial conjugacy classes from summation -/
   rw [← Finset.sum_sdiff (ConjClasses.noncenter G).toFinset.subset_univ]; congr 1
   /- Now we can obtain the result by calculation -/
-  calc card (Subgroup.center G) = card ((noncenter G)ᶜ : Set (ConjClasses G)) :=
-    card_congr ((mk_bijOn G).equiv _)
+  calc
+    _ = card ((noncenter G)ᶜ : Set (ConjClasses G)) := by
+      exact card_congr (mk_bijOn G).equiv
     _ = Finset.card (Finset.univ \ (noncenter G).toFinset) := by
       rw [← Set.toFinset_card, Set.toFinset_compl, Finset.compl_eq_univ_sdiff]
-    _ = ∑ x ∈ Finset.univ \ (noncenter G).toFinset, 1 :=
-      Finset.card_eq_sum_ones _
-    _ = ∑ x ∈ Finset.univ \ (noncenter G).toFinset, card x.carrier := by
-      rw [Finset.sum_congr rfl _];
-      rintro ⟨g⟩ hg; simp at hg
-      rw [← Set.toFinset_card, eq_comm, Finset.card_eq_one]
-      exact ⟨g, by rw [← Set.toFinset_singleton]; exact Set.toFinset_congr (Set.Subsingleton.eq_singleton_of_mem hg mem_carrier_mk)⟩
+    _ = ∑ x ∈ Finset.univ \ (noncenter G).toFinset, 1 := by
+      exact Finset.card_eq_sum_ones' _
+    _ = ∑ x ∈ Finset.univ \ (noncenter G).toFinset, card x.carrier := by sorry

@@ -31,91 +31,11 @@ lemma Equiv.Perm.orderOf_swap : ∀ (n : ℕ) (i j : Fin n), orderOf (Equiv.swap
     (by rw [pow_two, ext_iff]; intro x; rw [mul_apply (Equiv.swap i j) (Equiv.swap i j) x]; simp)
 
 
-namespace SymmGroup
-
-#check Equiv.Perm.cycleType_conj
-#check isConj_of_cycleType_eq
-#check isConj_iff_cycleType_eq
-#check partition_eq_of_isConj
--- #check List.Mem.tail
-
-variable {n : ℕ}
-
-def toPerm (σ : SymmGroup n) : Equiv.Perm (Fin n) := σ
-
 instance : Setoid (SymmGroup n) := IsConj.setoid (SymmGroup n)
 
 instance : Fintype (SymmGroup n) := inferInstance
 
-instance : MulAction (SymmGroup n) (Fin n) where
-  one_smul := one_apply
-  mul_smul := mul_apply
-
-def p1 : SymmGroup 3 := ⟨![1, 2, 0], ![2, 0, 1], by decide, by decide⟩
-def p2 : SymmGroup 3 := ⟨![0, 2, 1], ![0, 2, 1], by decide, by decide⟩
-def p12 : SymmGroup 4 := c[0, 3, 1]
-def p21 : SymmGroup 4 := c[2, 1]
-
-#check repr_perm
-#check Fintype.decidableEqEquivFintype
-
-
-#eval p12 * p21
-#eval (@Finset.univ (SymmGroup 3) _).image fun σ => (ConjClasses.mk σ).unquot
-#eval (@Finset.univ (SymmGroup 3) _).image fun σ => σ.partition.parts
-#eval (Subgroup.center (SymmGroup 3)).carrier.toFinset
-#eval @decomposeFin 3 p12
-
-/- Example 1.33(2) A Demonstration for case-by-case proof -/
-lemma S3_not_cyclic : ¬ IsCyclic (SymmGroup 3) := by
-  intro h
-  rw [isCyclic_iff_exists_ofOrder_eq_natCard] at h
-  have symm3_card : Nat.card (SymmGroup 3) = 6 := by
-    rw [Nat.card_eq_fintype_card, Fintype.card_perm, Fintype.card_fin]; decide
-  contrapose! h
-  intro σ
-  rw [symm3_card]
-  fin_cases σ
-  . simp
-  . simp;
-    have : orderOf (@Equiv.swap (Fin 3) _ 1 2) <= 2 := by
-      exact orderOf_swap 3 (Fin.mk 1 (by simp)) (Fin.mk 2 (by simp))
-    linarith
-  . simp; sorry
-  . simp; sorry
-  . simp; sorry
-  . simp; sorry
-
-/- Example 1.33(2) Genralized version -/
-lemma S3_not_cyclic' : ¬ IsCyclic (SymmGroup 3) := by
-  by_contra h_cyc
-  let h_comm := @IsCyclic.commGroup _ _ h_cyc
-  let x1 : SymmGroup 3 := c[0, 1]
-  let x2 : SymmGroup 3 := c[1, 2]
-  have h : x1 * x2 = x2 * x1 := mul_comm x1 x2
-  have hc : x1 * x2 ≠ x2 * x1 := by unfold_let; decide
-  exact hc h
-
-/- Example 1.12(2) Computational verification -/
-#eval @Finset.univ (MulAction.stabilizer (SymmGroup 4) (0 : Fin 4)).carrier _
-#eval @Finset.univ (SymmGroup 3) _
-
-/- Example 1.12(2) Generalized version -/
-def Fin_of_Fin_succ_stablizer : MulAction.stabilizer (SymmGroup n.succ) (0 : Fin n.succ) ≃ SymmGroup n where
-  toFun s := (decomposeFin s.1).2
-  invFun σ := ⟨decomposeFin.symm (0, σ),
-    by rw [MulAction.mem_stabilizer_iff]; simp;⟩
-  left_inv s := by
-    have : (decomposeFin s.1).1 = 0 := by
-      simp [decomposeFin]; let h := s.2; rw [MulAction.mem_stabilizer_iff] at h; exact h
-    simp_rw [← this, Prod.eta, Equiv.symm_apply_apply]
-  right_inv σ := by simp_rw [Equiv.apply_symm_apply]
-
-/- Example 1.12(2) Proof by generalizarion-/
-def S4_stablizer_eq_S3 : MulAction.stabilizer (SymmGroup 4) (0 : Fin 4) ≃ SymmGroup 3 :=
-  Fin_of_Fin_succ_stablizer
-
-
+namespace SymmGroup
 /- Example 1.29 -/
 
 namespace List
